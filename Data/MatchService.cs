@@ -1,46 +1,163 @@
-﻿using System.Runtime.Serialization.Json;
+﻿using Newtonsoft.Json;
 using System.Text;
+using Tiwaz.WebClient.Api.DtoModel;
+using Tiwaz.WebClient.Data.Classes;
 
 namespace Tiwaz.WebClient.Data
 {
     public class MatchService
     {
-        private static readonly string _ServerBaseUrl = "https://localhost:7077/";
+        private static readonly string _ServerBaseUrl = "https://localhost:7077/api/";
+
+        public MatchService()
+        {
+            Console.WriteLine("Using Serverbase URL " + _ServerBaseUrl);
+        }
+
 
         /// <summary>
-        /// Gets all Matches from the Server
+        /// Gets a Match
         /// </summary>
+        /// <param name="matchId"></param>
         /// <returns></returns>
-        public async Task<List<Match>> GetMatchesAsync()
+        public async Task<DtoMatch?> GetMatchAsync(int matchId)
         {
-            var matchList = new List<Match>();
+            var match = new DtoMatch();
             HttpClient client = new HttpClient();
 
-            try
+            using (var jsonStream = await client.GetStreamAsync(_ServerBaseUrl + "Match/" + matchId))
             {
-                using (var jsonStream = await client.GetStreamAsync(_ServerBaseUrl + "match"))
-                {
-                    var sR = new StreamReader(jsonStream);
-                    var json = await sR.ReadToEndAsync();
-                    sR.Close();
+                var sR = new StreamReader(jsonStream);
+                var json = await sR.ReadToEndAsync();
+                sR.Close();
 
-                    using (var ms = new MemoryStream(Encoding.Unicode.GetBytes(json)))
-                    {
-                        DataContractJsonSerializer ds = new DataContractJsonSerializer(typeof(List<Match>));
-                        matchList = (List<Match>)ds.ReadObject(ms);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Failed to get match list. Error: {0}", ex.ToString());
-                //{ "Type 'Tiwaz.WebClient.Match' cannot be serialized. Consider marking it with the DataContractAttribute
-                //attribute, and marking all of its members you want serialized with the DataMemberAttribute attribute.
-                //Alternatively, you can ensure that the type is public and has a parameterless constructor - all public
-                //members of the type will then be serialized, and no attributes will be required."}
+                match = JsonConvert.DeserializeObject<DtoMatch>(json, Helper.GetJsonSerializer());
             }
 
-            return matchList;
+            return match;
+        }
+
+        /// <summary>
+        /// Gets the time left of a match
+        /// </summary>
+        /// <param name="matchId"></param>
+        /// <returns></returns>
+        public async Task<int> GetMatchTimeAsync(int matchId)
+        {
+            var matchTime = new int();
+            HttpClient client = new HttpClient();
+
+            using (var jsonStream = await client.GetStreamAsync(_ServerBaseUrl + "Match/" + matchId + "/time"))
+            {
+                var sR = new StreamReader(jsonStream);
+                var json = await sR.ReadToEndAsync();
+                sR.Close();
+
+                matchTime = JsonConvert.DeserializeObject<int>(json, Helper.GetJsonSerializer());
+            }
+
+            return matchTime;
+        }
+
+        /// <summary>
+        /// Gets all Matches
+        /// </summary>
+        /// <returns></returns>
+        public async Task<List<DtoMatch>> GetMatchListAsync()
+        {
+            var matchList = new List<DtoMatch>();
+            HttpClient client = new HttpClient();
+
+            using (var jsonStream = await client.GetStreamAsync(_ServerBaseUrl + "Match"))
+            {
+                var sR = new StreamReader(jsonStream);
+                var json = await sR.ReadToEndAsync();
+                sR.Close();
+
+                matchList = JsonConvert.DeserializeObject<List<DtoMatch>>(json, Helper.GetJsonSerializer());
+            }
+
+            return matchList ?? new List<DtoMatch>();
+        }
+
+
+        /// <summary>
+        /// Add a new Tournament
+        /// </summary>
+        /// <param name="match"></param>
+        public async Task AddMatchAsync(DtoMatch match)
+        {
+            var json = JsonConvert.SerializeObject(match, Helper.GetJsonSerializer());
+
+            HttpClient client = new HttpClient();
+            var requestMessage = Helper.GetRequestMessage("POST", _ServerBaseUrl + "Match", json);
+            if (requestMessage.Content == null)
+            {
+                Console.WriteLine("No content set. Not setting content type...");
+            }
+            else
+            {
+                requestMessage.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
+            }
+
+            var response = await client.SendAsync(requestMessage);
+            if (!response.IsSuccessStatusCode)
+            {
+                var responseBody = await response.Content.ReadAsStringAsync();
+            }
+        }
+
+        /// <summary>
+        /// Add a new Tournament
+        /// </summary>
+        /// <param name="match"></param>
+        public async Task SetMatchAsync(DtoMatch match)
+        {
+            var json = JsonConvert.SerializeObject(match, Helper.GetJsonSerializer());
+
+            HttpClient client = new HttpClient();
+            var requestMessage = Helper.GetRequestMessage("PUT", _ServerBaseUrl + "Match/" + match.Id, json);
+
+            if (requestMessage.Content == null)
+            {
+                Console.WriteLine("No content set. Not setting content type...");
+            }
+            else
+            {
+                requestMessage.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
+            }
+            
+
+            var response = await client.SendAsync(requestMessage);
+            if (!response.IsSuccessStatusCode)
+            {
+                var responseBody = await response.Content.ReadAsStringAsync();
+            }
+        }
+
+        /// <summary>
+        /// Send Control Commands of a Match
+        /// </summary>
+        public async Task ControlMatchtimeAsync(int matchId, string command)
+        {
+            HttpClient client = new HttpClient();
+            var requestMessage = Helper.GetRequestMessage("PUT", _ServerBaseUrl + "Match/" + matchId + "/time/" + command, "");
+            var response = await client.SendAsync(requestMessage);
+            if (!response.IsSuccessStatusCode)
+            {
+                var responseBody = await response.Content.ReadAsStringAsync();
+            }
+        }
+
+        public async Task SetMatchGoalAsync(int matchId, int teamId, int amount)
+        {
+            HttpClient client = new HttpClient();
+            var requestMessage = Helper.GetRequestMessage("PUT", _ServerBaseUrl + "Match/" + matchId + "/goal/" + teamId + "/" + amount, "");
+            var response = await client.SendAsync(requestMessage);
+            if (!response.IsSuccessStatusCode)
+            {
+                var responseBody = await response.Content.ReadAsStringAsync();
+            }
         }
     }
 }

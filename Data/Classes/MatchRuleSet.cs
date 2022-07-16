@@ -1,4 +1,4 @@
-﻿namespace Tiwaz.WebClient
+﻿namespace Tiwaz.WebClient.Data.Classes
 {
     public class MatchRuleSet
     {
@@ -47,7 +47,7 @@
         [System.Text.Json.Serialization.JsonPropertyName("match_extension_on_draw")]
         public bool MatchExtensionOnDraw { get; set; }
 
-        
+
 
         /// <summary>
         /// Does the match automatically extend if there is a draw at the end of the last regular halftime

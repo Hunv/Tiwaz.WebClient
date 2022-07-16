@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Tiwaz.WebClient
+namespace Tiwaz.WebClient.Data.Classes
 {
     public class Player
     {

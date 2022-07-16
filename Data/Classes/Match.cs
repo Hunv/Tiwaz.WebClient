@@ -1,14 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Tiwaz.WebClient
+namespace Tiwaz.WebClient.Data.Classes
 {
     public class Match : MatchRuleSet
     {
-        public Match(string team1Name, string team2Name) 
+        public Match()
         {
-            Team1Name = team1Name;
-            Team2Name = team2Name;
         }
 
         /// <summary>
@@ -100,10 +98,5 @@ namespace Tiwaz.WebClient
         [NotMapped]
         public List<int> MatchEventIds { get; set; }
 
-        /// <summary>
-        /// The name of the game that this match is for (i.e. soccer, underwaterhockey, ...)
-        /// </summary>
-        [Required]
-        public string GameName { get; set; }        
     }
 }

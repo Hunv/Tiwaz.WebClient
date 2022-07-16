@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Tiwaz.WebClient
+namespace Tiwaz.WebClient.Data.Classes
 {
     public class MatchEvent
     {
